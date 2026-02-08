@@ -25,7 +25,7 @@ Brain tumors are among the most serious medical conditions requiring early detec
   - Healthy: 1,595 images (no tumor)
 - **Split**: 70% train · 15% validation · 15% test
 
-![Data Distribution](binary_distribution.png)
+![Data Distribution](./results/binary_distribution.png)
 
 ## 🏗️ Model Architecture
 
@@ -75,10 +75,10 @@ This is critical for medical AI — a model that just says "Tumor" without showi
 The model correctly identified **601 out of 617 tumors** (only 16 false negatives) and **237 out of 240 healthy scans** (only 3 false positives). This high sensitivity makes it suitable as a screening tool to flag cases for radiologist review.
 
 ### Confusion Matrix
-![Confusion Matrix](confusion_matrix.png)
+![Confusion Matrix](./results/confusion_matrix.png)
 
 ### Training History
-![Training History](training_history.png)
+![Training History](./model/training_history.png)
 
 ## 🚀 Getting Started
 
@@ -152,7 +152,7 @@ brain-tumor-detection/
 ├── .gitignore
 ├── README.md
 ├── best_brain_tumor_model.h5   # Best checkpoint (generated)
-└── *.png                       # Generated plots
+└── results                # Generated plots
 ```
 
 ## 🔮 Future Improvements
