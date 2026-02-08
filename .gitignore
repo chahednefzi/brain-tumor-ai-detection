@@ -1,0 +1,28 @@
+# Virtual environment
+.venv/
+venv/
+
+# Model files (large — share via release or Google Drive link instead)
+*.h5
+*.keras
+
+# Dataset (too large for GitHub — download from Kaggle)
+dataset/
+
+# Generated plots (regenerated on each training run)
+*.png
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
