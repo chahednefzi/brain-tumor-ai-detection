@@ -2,7 +2,7 @@
 
 A CNN-based system for automated brain tumor detection in MRI scans, with **Grad-CAM explainability** so you can see exactly where the model is looking.
 
-![Grad-CAM Explanations](gradcam_explanations.png)
+![Grad-CAM Explanations](./results/gradcam_explanations.png)
 
 ## 🎯 Project Overview
 
@@ -25,7 +25,7 @@ Brain tumors are among the most serious medical conditions requiring early detec
   - Healthy: 1,595 images (no tumor)
 - **Split**: 70% train · 15% validation · 15% test
 
-![Data Distribution](binary_distribution.png)
+![Data Distribution](./results/binary_distribution.png)
 
 ## 🏗️ Model Architecture
 
@@ -58,7 +58,7 @@ Grad-CAM (Gradient-weighted Class Activation Mapping) shows **which parts of the
 
 This is critical for medical AI — a model that just says "Tumor" without showing *why* is hard to trust. Grad-CAM makes the decision transparent.
 
-![Grad-CAM Grid](gradcam_explanations.png)
+![Grad-CAM Grid](./results/gradcam_explanations.png)
 
 ## 📈 Results
 
@@ -75,10 +75,10 @@ This is critical for medical AI — a model that just says "Tumor" without showi
 The model correctly identified **597 out of 617 tumors** (only 20 false negatives) and **all 240 healthy scans** (zero false positives). The perfect specificity (100%) means the model never incorrectly flags a healthy scan as tumor, making it reliable for screening purposes.
 
 ### Confusion Matrix
-![Confusion Matrix](confusion_matrix.png)
+![Confusion Matrix](./results/confusion_matrix.png)
 
 ### Training History
-![Training History](training_history.png)
+![Training History](./results/training_history.png)
 
 ## 🚀 Getting Started
 
