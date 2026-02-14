@@ -1,0 +1,4 @@
+{
+  "decision_threshold": 0.2,
+  "min_tumor_recall_target": 0.95
+}

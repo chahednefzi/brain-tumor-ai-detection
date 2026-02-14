@@ -10,22 +10,16 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import json
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report
-from sklearn.utils.class_weight import compute_class_weight
 import tensorflow as tf
 from tensorflow import keras
+from keras import layers, models
+from keras_preprocessing.image import ImageDataGenerator
+from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 import cv2
 from PIL import Image
 import gc
-
-ImageDataGenerator = keras.preprocessing.image.ImageDataGenerator
-EarlyStopping = keras.callbacks.EarlyStopping
-ModelCheckpoint = keras.callbacks.ModelCheckpoint
-ReduceLROnPlateau = keras.callbacks.ReduceLROnPlateau
-layers = keras.layers
-models = keras.models
 
 # ═══════════════════════════════════════════════════════════
 # Memory Management
@@ -53,10 +47,8 @@ if gpus:
 # ─────────────────────────────────────────────
 ROOT_DIR = "dataset/Training"
 IMG_SIZE = 150
-BATCH_SIZE = 8  # Further reduced to avoid CPU OOM on long runs
+BATCH_SIZE = 16  # REDUCED from 32 to prevent memory issues
 EPOCHS = 25
-MIN_TUMOR_RECALL = 0.95
-DECISION_THRESHOLD = 0.5
 
 print("=" * 60)
 print("BRAIN TUMOR DETECTION - BINARY CLASSIFICATION")
@@ -164,31 +156,21 @@ print(f"  Test       : {len(X_test)}")
 # ─────────────────────────────────────────────
 def load_and_preprocess_image(img_path):
     img = cv2.imread(img_path)
-    if img is None:
-        raise ValueError(f"Unable to read image: {img_path}")
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img = cv2.resize(img, (IMG_SIZE, IMG_SIZE))
-    return (img / 255.0).astype(np.float32)
+    return img / 255.0
 
 print("\nLoading images...")
-X_train_images = np.asarray([load_and_preprocess_image(p) for p in X_train], dtype=np.float32)
+X_train_images = np.array([load_and_preprocess_image(p) for p in X_train])
 y_train = np.array(y_train)
-X_val_images   = np.asarray([load_and_preprocess_image(p) for p in X_val], dtype=np.float32)
+X_val_images   = np.array([load_and_preprocess_image(p) for p in X_val])
 y_val   = np.array(y_val)
-X_test_images  = np.asarray([load_and_preprocess_image(p) for p in X_test], dtype=np.float32)
+X_test_images  = np.array([load_and_preprocess_image(p) for p in X_test])
 y_test  = np.array(y_test)
 
 print(f"  Train shape : {X_train_images.shape}")
 print(f"  Val shape   : {X_val_images.shape}")
 print(f"  Test shape  : {X_test_images.shape}")
-
-class_weights_array = compute_class_weight(
-    class_weight='balanced',
-    classes=np.array([0, 1]),
-    y=y_train
-)
-class_weights = {0: float(class_weights_array[0]), 1: float(class_weights_array[1])}
-print(f"\nClass weights: {class_weights}")
 
 # Clear memory after loading
 gc.collect()
@@ -209,6 +191,7 @@ datagen = ImageDataGenerator(
     horizontal_flip=True,
     fill_mode='nearest'
 )
+datagen.fit(X_train_images)
 print("✓ Data augmentation configured")
 
 # ─────────────────────────────────────────────
@@ -265,7 +248,6 @@ try:
         validation_data=(X_val_images, y_val),
         epochs=EPOCHS,
         callbacks=callbacks,
-        class_weight=class_weights,
         verbose=1
     )
 
@@ -307,55 +289,6 @@ def plot_history(history):
 plot_history(history)
 
 # ─────────────────────────────────────────────
-# Threshold optimization on validation set
-# ─────────────────────────────────────────────
-print("\n" + "=" * 60)
-print("THRESHOLD OPTIMIZATION (VALIDATION SET)")
-print("=" * 60)
-
-val_predictions = model.predict(X_val_images, verbose=0).flatten()
-best_threshold = 0.5
-best_specificity = -1.0
-best_tumor_recall = -1.0
-
-for threshold in np.linspace(0.20, 0.80, 121):
-    val_pred_classes = (val_predictions > threshold).astype(int)
-    val_cm = confusion_matrix(y_val, val_pred_classes, labels=[0, 1])
-
-    tumor_tp = val_cm[0][0]
-    tumor_fn = val_cm[0][1]
-    healthy_tp = val_cm[1][1]
-    healthy_fp = val_cm[1][0]
-
-    tumor_recall = tumor_tp / max((tumor_tp + tumor_fn), 1)
-    specificity = healthy_tp / max((healthy_tp + healthy_fp), 1)
-
-    if tumor_recall >= MIN_TUMOR_RECALL and specificity > best_specificity:
-        best_specificity = specificity
-        best_tumor_recall = tumor_recall
-        best_threshold = float(threshold)
-
-DECISION_THRESHOLD = best_threshold
-print(f"Selected decision threshold: {DECISION_THRESHOLD:.3f}")
-if best_specificity >= 0:
-    print(f"  Validation tumor recall : {best_tumor_recall * 100:.2f}%")
-    print(f"  Validation specificity  : {best_specificity * 100:.2f}%")
-else:
-    print("  No threshold met tumor recall target. Using default 0.5.")
-    DECISION_THRESHOLD = 0.5
-
-with open("model_config.json", "w", encoding="utf-8") as f:
-    json.dump(
-        {
-            "decision_threshold": DECISION_THRESHOLD,
-            "min_tumor_recall_target": MIN_TUMOR_RECALL
-        },
-        f,
-        indent=2
-    )
-print("✓ model_config.json saved")
-
-# ─────────────────────────────────────────────
 # Evaluation
 # ─────────────────────────────────────────────
 print("\n" + "=" * 60)
@@ -367,7 +300,7 @@ print(f"\n  Test Accuracy : {test_accuracy * 100:.2f}%")
 print(f"  Test Loss     : {test_loss:.4f}")
 
 predictions = model.predict(X_test_images, verbose=0)
-predicted_classes = (predictions > DECISION_THRESHOLD).astype(int).flatten()
+predicted_classes = (predictions > 0.5).astype(int).flatten()
 
 cm = confusion_matrix(y_test, predicted_classes)
 class_labels = ['Tumor', 'Healthy']
@@ -605,7 +538,6 @@ for row, i in enumerate(gradcam_indices):
     axes[row, 1].axis('off')
 
     # Col 2 — Overlay
-    
     axes[row, 2].imshow(overlay)
     axes[row, 2].set_title('Overlay', fontsize=11)
     axes[row, 2].axis('off')
@@ -637,7 +569,7 @@ print("\nTo use the web interface:")
 print("  streamlit run app.py")
 print("\nTo predict a new image in Python:")
 print("  from keras.models import load_model")
-print("  from detection import predict_image")
+print("  from detection_fixed import predict_image")
 print("  model = load_model('best_brain_tumor_model.h5')")
 print("  predict_image(model, 'path/to/your/image.jpg')")
 print("=" * 60)

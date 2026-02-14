@@ -1,35 +1,28 @@
-﻿# -*- coding: utf-8 -*-
 """
 Brain Tumor Detection - Professional Medical AI System
 Streamlit Web Application Interface
-FIXED VERSION with proper encoding and inference settings
 """
-
-import os
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 import streamlit as st
 import cv2
 import numpy as np
-import json
 import tensorflow as tf
-from tensorflow.keras.models import load_model
+from keras.models import load_model
 from PIL import Image
 
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─────────────────────────────────────────────
 # Page config
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─────────────────────────────────────────────
 st.set_page_config(
     page_title="Brain Tumor Detection System",
-    page_icon="ðŸ¥",
+    page_icon="🏥",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─────────────────────────────────────────────
 # Professional Medical CSS - Dark Theme
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─────────────────────────────────────────────
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@400;500;600;700&display=swap');
@@ -519,9 +512,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─────────────────────────────────────────────
 # Professional Header
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─────────────────────────────────────────────
 st.markdown("""
     <div class="page-header">
         <div class="page-title">Brain Tumor Detection System</div>
@@ -529,41 +522,20 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─────────────────────────────────────────────
 # Model Loading
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─────────────────────────────────────────────
 IMG_SIZE = 150
 GRADCAM_LAYER = 'conv4'
-MODEL_CONFIG_PATH = "model_config.json"
-DEFAULT_DECISION_THRESHOLD = 0.52
-LOW_CONFIDENCE_MARGIN = 0.03
-UNCERTAIN_MARGIN = 0.04
-
-
-@st.cache_data
-def load_decision_threshold():
-    if not os.path.exists(MODEL_CONFIG_PATH):
-        return DEFAULT_DECISION_THRESHOLD
-    try:
-        with open(MODEL_CONFIG_PATH, "r", encoding="utf-8") as f:
-            cfg = json.load(f)
-        value = float(cfg.get("decision_threshold", DEFAULT_DECISION_THRESHOLD))
-        # Keep threshold in a safe range for binary healthy-vs-tumor decision
-        return min(max(value, 0.50), 0.95)
-    except Exception:
-        return DEFAULT_DECISION_THRESHOLD
-
-
-DECISION_THRESHOLD = load_decision_threshold()
 
 @st.cache_resource
 def load_trained_model():
     try:
         model = load_model('best_brain_tumor_model.h5')
-        model.trainable = False  # FIXED: Set to False for inference to prevent BatchNorm issues
+        model.trainable = True
         return model
     except Exception as e:
-        st.error(f"âš ï¸ Model Loading Error: {e}")
+        st.error(f"⚠️ Model Loading Error: {e}")
         st.info("""
             **Model not found!** Please train the model first:
             
@@ -575,9 +547,9 @@ def load_trained_model():
 
 model = load_trained_model()
 
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─────────────────────────────────────────────
 # Grad-CAM Functions
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─────────────────────────────────────────────
 def generate_gradcam(model, img_array, layer_name=GRADCAM_LAYER):
     """Generate Grad-CAM heatmap"""
     _ = model(img_array)
@@ -635,76 +607,9 @@ def overlay_heatmap(heatmap, original_img, alpha=0.4):
 
     return cv2.addWeighted(original_img, 1 - alpha, heatmap_colored, alpha, 0)
 
-
-def preprocess_mri_image(img_rgb):
-    img_resized = cv2.resize(img_rgb, (IMG_SIZE, IMG_SIZE))
-    gray = cv2.cvtColor(img_resized, cv2.COLOR_RGB2GRAY)
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    gray = clahe.apply(gray)
-    img_preprocessed = cv2.cvtColor(gray, cv2.COLOR_GRAY2RGB)
-    img_normalized = (img_preprocessed / 255.0).astype(np.float32)
-    return img_resized, img_preprocessed, img_normalized
-
-
-def assess_mri_likelihood(img_resized):
-    r_channel = img_resized[:, :, 0]
-    g_channel = img_resized[:, :, 1]
-    b_channel = img_resized[:, :, 2]
-
-    rg_diff = np.abs(r_channel.astype(float) - g_channel.astype(float)).mean()
-    rb_diff = np.abs(r_channel.astype(float) - b_channel.astype(float)).mean()
-    gb_diff = np.abs(g_channel.astype(float) - b_channel.astype(float)).mean()
-    avg_channel_diff = (rg_diff + rb_diff + gb_diff) / 3.0
-
-    grayscale = cv2.cvtColor(img_resized, cv2.COLOR_RGB2GRAY)
-    gray_similarity = np.corrcoef(grayscale.flatten(), r_channel.flatten())[0, 1]
-    if np.isnan(gray_similarity):
-        gray_similarity = 0.0
-
-    hsv = cv2.cvtColor(img_resized, cv2.COLOR_RGB2HSV)
-    saturation = hsv[:, :, 1].mean()
-    mean_intensity = float(np.mean(img_resized))
-    std_intensity = float(np.std(img_resized))
-
-    edges = cv2.Canny(grayscale, 50, 150)
-    edge_density = float(np.sum(edges > 0) / (IMG_SIZE * IMG_SIZE))
-
-    checks = {
-        "grayscale_like": avg_channel_diff < 45,
-        "low_saturation": saturation < 70,
-        "gray_similarity": gray_similarity > 0.70,
-        "intensity_range": 10 < mean_intensity < 245 and std_intensity > 8,
-        "edge_density": 0.003 < edge_density < 0.60,
-    }
-    passed = sum(int(v) for v in checks.values())
-    is_likely_mri = passed >= 3
-
-    reasons = []
-    if not checks["grayscale_like"]:
-        reasons.append("Color channels are very different from each other.")
-    if not checks["low_saturation"]:
-        reasons.append("Color saturation is high for a typical MRI.")
-    if not checks["gray_similarity"]:
-        reasons.append("Image is weakly correlated with grayscale structure.")
-    if not checks["intensity_range"]:
-        reasons.append("Intensity distribution is unusual for MRI-like scans.")
-    if not checks["edge_density"]:
-        reasons.append("Edge density is outside common MRI-like range.")
-
-    metrics = {
-        "avg_channel_diff": avg_channel_diff,
-        "gray_similarity": gray_similarity,
-        "saturation": saturation,
-        "mean_intensity": mean_intensity,
-        "std_intensity": std_intensity,
-        "edge_density": edge_density,
-        "checks_passed": passed,
-    }
-    return is_likely_mri, reasons, metrics
-
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─────────────────────────────────────────────
 # Professional Sidebar
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─────────────────────────────────────────────
 with st.sidebar:
     st.markdown("### PERFORMANCE METRICS")
     
@@ -735,7 +640,7 @@ with st.sidebar:
     st.markdown("""
         **Model:** Custom CNN  
         **Parameters:** 6.8M  
-        **Input:** 150Ã—150 RGB  
+        **Input:** 150×150 RGB  
         **Framework:** TensorFlow  
         **Visualization:** Grad-CAM
     """)
@@ -757,16 +662,16 @@ with st.sidebar:
         </div>
     """, unsafe_allow_html=True)
 
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─────────────────────────────────────────────
 # Main Content
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─────────────────────────────────────────────
 if model is None:
     st.stop()
 
 uploaded_file = st.file_uploader(
     "Upload Brain MRI Scan",
     type=['jpg', 'png', 'jpeg'],
-    help="Supported: JPG, PNG, JPEG â€¢ Recommended: High-resolution axial MRI scans"
+    help="Supported: JPG, PNG, JPEG • Recommended: High-resolution axial MRI scans"
 )
 
 if uploaded_file is not None:
@@ -782,49 +687,88 @@ if uploaded_file is not None:
     img_resized = cv2.resize(img_array, (IMG_SIZE, IMG_SIZE))
     img_normalized = img_resized / 255.0
     
-    # MRI plausibility check (tolerant to valid dark/low-contrast scans)
-    is_likely_mri, mri_reasons, mri_metrics = assess_mri_likelihood(img_resized)
-
+    # Advanced MRI validation
+    # MRI scans have specific characteristics:
+    # 1. Mostly grayscale (very low color variance between R, G, B channels)
+    # 2. Specific intensity distribution (medical imaging range)
+    # 3. High contrast edges (brain structures)
+    # 4. Dark background with bright tissue regions
+    
+    # Check 1: Color variance (MRI should be nearly identical across RGB channels)
+    r_channel = img_resized[:, :, 0]
+    g_channel = img_resized[:, :, 1]
+    b_channel = img_resized[:, :, 2]
+    
+    # Calculate difference between channels
+    rg_diff = np.abs(r_channel.astype(float) - g_channel.astype(float)).mean()
+    rb_diff = np.abs(r_channel.astype(float) - b_channel.astype(float)).mean()
+    gb_diff = np.abs(g_channel.astype(float) - b_channel.astype(float)).mean()
+    avg_channel_diff = (rg_diff + rb_diff + gb_diff) / 3
+    
+    # Check 2: Grayscale conversion similarity
+    grayscale = cv2.cvtColor(img_resized, cv2.COLOR_RGB2GRAY)
+    gray_similarity = np.corrcoef(grayscale.flatten(), r_channel.flatten())[0, 1]
+    
+    # Check 3: Color saturation (should be very low for MRI)
+    hsv = cv2.cvtColor(img_resized, cv2.COLOR_RGB2HSV)
+    saturation = hsv[:, :, 1].mean()
+    
+    # Check 4: Intensity distribution (medical imaging range)
+    mean_intensity = np.mean(img_resized)
+    std_intensity = np.std(img_resized)
+    
+    # Check 5: Edge detection (MRI has specific edge patterns)
+    edges = cv2.Canny(grayscale, 50, 150)
+    edge_density = np.sum(edges > 0) / (IMG_SIZE * IMG_SIZE)
+    
+    # Strict MRI criteria
+    is_grayscale = avg_channel_diff < 15  # Channels must be very similar
+    is_low_saturation = saturation < 20    # Very low color saturation
+    is_high_similarity = gray_similarity > 0.95  # High correlation with grayscale
+    has_medical_intensity = 30 < mean_intensity < 180 and std_intensity > 20
+    has_reasonable_edges = 0.02 < edge_density < 0.3  # Not too empty, not too busy
+    
+    is_likely_mri = (is_grayscale and is_low_saturation and is_high_similarity and 
+                     has_medical_intensity and has_reasonable_edges)
+    
     if not is_likely_mri:
         st.markdown("""
             <div class="warning-note">
-                <strong>INVALID IMAGE DETECTED</strong>
+                <strong>⚠️ INVALID IMAGE DETECTED</strong>
             </div>
         """, unsafe_allow_html=True)
-
+        
+        # Provide specific feedback about why image was rejected
         rejection_reasons = []
-        if mri_metrics["avg_channel_diff"] >= 45:
-            rejection_reasons.append(f"• Image appears strongly colored (channel difference: {mri_metrics['avg_channel_diff']:.1f}, expected < 45)")
-        if mri_metrics["saturation"] >= 70:
-            rejection_reasons.append(f"• High color saturation detected ({mri_metrics['saturation']:.1f}, expected < 70)")
-        if mri_metrics["gray_similarity"] <= 0.70:
-            rejection_reasons.append(f"• Weak grayscale similarity ({mri_metrics['gray_similarity']:.2f}, expected > 0.70)")
-        if not (10 < mri_metrics["mean_intensity"] < 245 and mri_metrics["std_intensity"] > 8):
-            rejection_reasons.append(f"• Intensity outside MRI-like range (mean: {mri_metrics['mean_intensity']:.1f}, std: {mri_metrics['std_intensity']:.1f})")
-        if not (0.003 < mri_metrics["edge_density"] < 0.60):
-            rejection_reasons.append(f"• Edge pattern inconsistent with MRI-like scans (density: {mri_metrics['edge_density']:.3f})")
-
-        if not rejection_reasons and mri_reasons:
-            rejection_reasons = [f"• {reason}" for reason in mri_reasons]
-
+        if not is_grayscale:
+            rejection_reasons.append(f"• Image appears to be in color (channel difference: {avg_channel_diff:.1f}, should be < 15)")
+        if not is_low_saturation:
+            rejection_reasons.append(f"• High color saturation detected ({saturation:.1f}, should be < 20)")
+        if not is_high_similarity:
+            rejection_reasons.append(f"• Image is not grayscale (similarity: {gray_similarity:.2f}, should be > 0.95)")
+        if not has_medical_intensity:
+            rejection_reasons.append(f"• Intensity outside medical imaging range (mean: {mean_intensity:.1f}, std: {std_intensity:.1f})")
+        if not has_reasonable_edges:
+            rejection_reasons.append(f"• Edge pattern inconsistent with MRI (density: {edge_density:.3f})")
+        
         st.error(f"""
             **Warning:** The uploaded image does not appear to be a valid brain MRI scan.
-
+            
             **Issues Detected:**
             {chr(10).join(rejection_reasons)}
-
+            
             **Common Problems:**
             - Image is a color photograph or illustration
             - Image is a screenshot or document
             - Image brightness/contrast inconsistent with medical imaging
             - Image lacks the characteristic grayscale appearance of MRI scans
-
+            
             **Please upload:**
             - Genuine brain MRI scans (T1, T2, FLAIR sequences)
             - Grayscale medical imaging files
             - DICOM-converted images in JPG/PNG format
             - Images should show brain cross-sections in grayscale
-
+            
             **Requirements:**
             - Format: JPG, PNG, JPEG
             - Content: Axial, sagittal, or coronal brain MRI scan
@@ -832,28 +776,23 @@ if uploaded_file is not None:
             - Appearance: Grayscale with visible brain structures
         """)
         st.stop()
+    
     img_batch = np.expand_dims(img_normalized, axis=0)
 
     # Prediction
     with st.spinner('Analyzing MRI scan with AI...'):
         prediction = model.predict(img_batch, verbose=0)[0][0]
 
-        if prediction >= (DECISION_THRESHOLD + UNCERTAIN_MARGIN):
+        if prediction > 0.5:
             result = "No Tumor Detected"
             confidence = prediction * 100
             result_class = "result-healthy"
             progress_class = "progress-healthy"
-        elif prediction <= (DECISION_THRESHOLD - UNCERTAIN_MARGIN):
+        else:
             result = "Tumor Detected"
             confidence = (1 - prediction) * 100
             result_class = "result-tumor"
             progress_class = "progress-tumor"
-        else:
-            result = "Inconclusive - Review Needed"
-            confidence = 100 - (abs(float(prediction) - DECISION_THRESHOLD) * 100)
-            result_class = "result-healthy"
-            progress_class = "progress-healthy"
-        is_borderline = abs(float(prediction) - DECISION_THRESHOLD) <= LOW_CONFIDENCE_MARGIN
 
         # Grad-CAM
         heatmap = generate_gradcam(model, img_batch)
@@ -870,15 +809,6 @@ if uploaded_file is not None:
             </div>
         </div>
     """, unsafe_allow_html=True)
-    if is_borderline:
-        st.warning(
-            f"Borderline prediction: model score={prediction:.4f}, threshold={DECISION_THRESHOLD:.2f}. "
-            "This case is close to the decision boundary and should be reviewed carefully."
-        )
-    if result == "Inconclusive - Review Needed":
-        st.info(
-            "Recommendation: do not ignore this image. Re-check with another MRI slice/sequence and confirm with medical review."
-        )
 
     # Image Grid - Professional Layout
     st.markdown('<div class="image-container">', unsafe_allow_html=True)
@@ -925,9 +855,9 @@ if uploaded_file is not None:
     with st.expander("Technical Specifications"):
         st.markdown(f"""
         **Raw Prediction Score:** `{prediction:.6f}`  
-        **Classification Threshold:** `{DECISION_THRESHOLD:.2f}`  
+        **Classification Threshold:** `0.5`  
         **Grad-CAM Target Layer:** `{GRADCAM_LAYER}`  
-        **Input Dimensions:** `{IMG_SIZE}Ã—{IMG_SIZE}Ã—3`  
+        **Input Dimensions:** `{IMG_SIZE}×{IMG_SIZE}×3`  
         **Model Architecture:** Custom Convolutional Neural Network  
         **Total Parameters:** 6.8 Million  
         **Framework:** TensorFlow 2.x + Keras API
@@ -976,4 +906,3 @@ else:
             <strong>File Size Limit:</strong> 200MB per file
         </div>
     """, unsafe_allow_html=True)
-

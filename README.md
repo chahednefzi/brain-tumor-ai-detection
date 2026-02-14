@@ -25,7 +25,7 @@ Brain tumors are among the most serious medical conditions requiring early detec
   - Healthy: 1,595 images (no tumor)
 - **Split**: 70% train · 15% validation · 15% test
 
-![Data Distribution](./results/binary_distribution.png)
+![Data Distribution](binary_distribution.png)
 
 ## 🏗️ Model Architecture
 
@@ -42,12 +42,12 @@ Conv2D (256) + BatchNorm + MaxPool   ← Grad-CAM targets this layer
     ↓
 Flatten → Dropout(0.5)
     ↓
-Dense (512) → Dropout(0.3)
+Dense (256) → Dropout(0.3)
     ↓
 Dense (1, sigmoid)
 ```
 
-**Total Parameters**: 6,813,889 (~26 MB)
+**Total Parameters**: 3,602,113 (~13.7 MB)
 
 ## 🔥 Grad-CAM Explainability
 
@@ -65,20 +65,20 @@ This is critical for medical AI — a model that just says "Tumor" without showi
 | Metric | Value |
 |---|---|
 | Test Accuracy | **97.78%** |
-| Sensitivity (Tumor Detection Rate) | **97.41%** |
-| Specificity (Healthy ID Rate) | **98.75%** |
+| Sensitivity (Tumor Detection Rate) | **96.76%** |
+| Specificity (Healthy ID Rate) | **100%** |
 | Precision (Tumor) | **100%** |
-| Precision (Healthy) | **94%** |
+| Precision (Healthy) | **92%** |
 | F1-Score (Tumor) | **98%** |
 | F1-Score (Healthy) | **96%** |
 
-The model correctly identified **601 out of 617 tumors** (only 16 false negatives) and **237 out of 240 healthy scans** (only 3 false positives). This high sensitivity makes it suitable as a screening tool to flag cases for radiologist review.
+The model correctly identified **597 out of 617 tumors** (only 20 false negatives) and **all 240 healthy scans** (zero false positives). The perfect specificity (100%) means the model never incorrectly flags a healthy scan as tumor, making it reliable for screening purposes.
 
 ### Confusion Matrix
-![Confusion Matrix](./results/confusion_matrix.png)
+![Confusion Matrix](confusion_matrix.png)
 
 ### Training History
-![Training History](./model/training_history.png)
+![Training History](training_history.png)
 
 ## 🚀 Getting Started
 
@@ -146,13 +146,14 @@ brain-tumor-detection/
 │       ├── meningioma/
 │       ├── pituitary/
 │       └── notumor/
-├── detection.py                # Training, evaluation, Grad-CAM
-├── app.py                      # Streamlit web app
-├── requirements.txt            # Python dependencies
+├── detection.py                  # Training, evaluation, Grad-CAM
+├── app.py                        # Streamlit web app
+├── requirements.txt              # Python dependencies
 ├── .gitignore
 ├── README.md
-├── best_brain_tumor_model.h5   # Best checkpoint (generated)
-└── results                # Generated plots
+├── best_brain_tumor_model.h5     # Best checkpoint (generated after training)
+├── model_config.json             # Optimized threshold config (generated)
+└── *.png                         # Generated plots (binary_distribution, confusion_matrix, etc.)
 ```
 
 ## 🔮 Future Improvements
