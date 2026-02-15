@@ -14,7 +14,7 @@ import cv2
 import numpy as np
 import json
 import tensorflow as tf
-from tensorflow.keras.models import load_model
+from tensorflow.keras.models import load_model #ignore: E402
 from PIL import Image
 
 # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -702,9 +702,8 @@ def assess_mri_likelihood(img_resized):
     }
     return is_likely_mri, reasons, metrics
 
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # Professional Sidebar
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
 with st.sidebar:
     st.markdown("### PERFORMANCE METRICS")
     
@@ -712,21 +711,21 @@ with st.sidebar:
         <div class="metric-row">
             <div class="metric-item">
                 <div class="metric-label">Accuracy</div>
-                <div class="metric-value">97.43%</div>
+                <div class="metric-value">97.78%</div>  
             </div>
             <div class="metric-item">
                 <div class="metric-label">Test Loss</div>
-                <div class="metric-value">0.079</div>
+                <div class="metric-value">0.072</div>
             </div>
         </div>
         <div class="metric-row">
             <div class="metric-item">
                 <div class="metric-label">Sensitivity</div>
-                <div class="metric-value">96.92%</div>
+                <div class="metric-value">96.76%</div>
             </div>
             <div class="metric-item">
                 <div class="metric-label">Specificity</div>
-                <div class="metric-value">98.75%</div>
+                <div class="metric-value">100%</div>
             </div>
         </div>
     """, unsafe_allow_html=True)
@@ -734,7 +733,7 @@ with st.sidebar:
     st.markdown("### SYSTEM DETAILS")
     st.markdown("""
         **Model:** Custom CNN  
-        **Parameters:** 6.8M  
+        **Parameters:** 3.6M  
         **Input:** 150Ã—150 RGB  
         **Framework:** TensorFlow  
         **Visualization:** Grad-CAM
