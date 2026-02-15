@@ -734,7 +734,7 @@ with st.sidebar:
     st.markdown("""
         **Model:** Custom CNN  
         **Parameters:** 3.6M  
-        **Input:** 150Ã—150 RGB  
+        **Input:** 150*150 RGB  
         **Framework:** TensorFlow  
         **Visualization:** Grad-CAM
     """)
