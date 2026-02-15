@@ -9,9 +9,6 @@ venv/
 # Dataset (too large for GitHub — download from Kaggle)
 dataset/
 
-# Generated plots (regenerated on each training run)
-*.png
-
 # Python
 __pycache__/
 *.py[cod]
